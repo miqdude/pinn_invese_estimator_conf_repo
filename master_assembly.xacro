@@ -1,0 +1,149 @@
+<?xml version="1.0" ?>
+<robot name="quad_drone_mas" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:include filename="iris_macro.xacro" />
+
+  <link name="connecting_stripes">
+    <inertial>
+      <origin xyz="0 0 -0.05" rpy="0 0 0"/>
+      <mass value="0.8"/>
+      <inertia ixx="0.08" ixy="0" ixz="0" iyy="0.08" iyz="0" izz="0.16"/>
+    </inertial>
+
+    <visual>
+      <origin xyz="0.5 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.1 1.2 0.02"/></geometry>
+      <material name="stripe_red"><color rgba="0.8 0.1 0.1 1"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0.5 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.1 1.2 0.02"/></geometry>
+    </collision>
+
+    <visual>
+      <origin xyz="-0.5 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.1 1.2 0.02"/></geometry>
+      <material name="stripe_red"/>
+    </visual>
+    <collision>
+      <origin xyz="-0.5 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.1 1.2 0.02"/></geometry>
+    </collision>
+
+    <visual>
+      <origin xyz="0 0.5 0" rpy="0 0 0"/>
+      <geometry><box size="1.0 0.1 0.02"/></geometry>
+      <material name="stripe_red"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0.5 0" rpy="0 0 0"/>
+      <geometry><box size="1.0 0.1 0.02"/></geometry>
+    </collision>
+
+    <visual>
+      <origin xyz="0 -0.5 0" rpy="0 0 0"/>
+      <geometry><box size="1.0 0.1 0.02"/></geometry>
+      <material name="stripe_red"/>
+    </visual>
+    <collision>
+      <origin xyz="0 -0.5 0" rpy="0 0 0"/>
+      <geometry><box size="1.0 0.1 0.02"/></geometry>
+    </collision>
+  </link>
+
+  <joint name="pendulum_roll_joint" type="continuous">
+    <parent link="connecting_stripes"/>
+    <child link="pendulum_dummy_link"/>
+    <origin xyz="0 0 -0.05" rpy="0 0 0"/> 
+    <axis xyz="1 0 0"/>
+    <dynamics damping="0.001" friction="0.0"/>
+  </joint>
+
+  <link name="pendulum_dummy_link">
+    <inertial>
+      <mass value="0.001"/> 
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6"/>
+    </inertial>
+  </link>
+
+  <joint name="pendulum_pitch_joint" type="continuous">
+    <parent link="pendulum_dummy_link"/>
+    <child link="pendulum_rod"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <dynamics damping="0.001" friction="0.0"/>
+  </joint>
+
+  <link name="pendulum_rod">
+    <inertial>
+      <mass value="0.2"/> 
+      <origin xyz="0 0 -0.4" rpy="0 0 0"/> 
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.0001"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 -0.4" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.01" length="0.8"/></geometry>
+      <material name="silver"><color rgba="0.8 0.8 0.8 1"/></material>
+    </visual>
+  </link>
+
+  <joint name="payload_fixed_joint" type="fixed">
+    <parent link="pendulum_rod"/>
+    <child link="payload_mass"/>
+    <origin xyz="0 0 -0.8" rpy="0 0 0"/> 
+  </joint>
+
+  <link name="payload_mass">
+    <inertial>
+      <mass value="2.5"/> 
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+    <visual>
+      <geometry><sphere radius="0.1"/></geometry>
+      <material name="payload_color"><color rgba="0.2 0.2 0.8 1"/></material>
+    </visual>
+  </link>
+
+  <xacro:iris_drone namespace="iris_1" xyz_offset="0.5 0.5 0.05" />
+  <xacro:iris_drone namespace="iris_2" xyz_offset="0.5 -0.5 0.05" />
+  <xacro:iris_drone namespace="iris_3" xyz_offset="-0.5 0.5 0.05" />
+  <xacro:iris_drone namespace="iris_4" xyz_offset="-0.5 -0.5 0.05" />
+
+  <xacro:macro name="landing_leg" params="prefix xyz_offset">
+    <joint name="${prefix}_joint" type="fixed">
+      <parent link="connecting_stripes"/>
+      <child link="${prefix}_link"/>
+      <origin xyz="${xyz_offset}" rpy="0 0 0"/>
+    </joint>
+
+    <link name="${prefix}_link">
+      <inertial>
+        <mass value="0.1"/> <origin xyz="0 0 -0.5" rpy="0 0 0"/> 
+        <inertia ixx="0.008" ixy="0" ixz="0" iyy="0.008" iyz="0" izz="0.00002"/>
+      </inertial>
+      <visual>
+        <origin xyz="0 0 -0.5" rpy="0 0 0"/>
+        <geometry>
+          <cylinder radius="0.015" length="1.0"/>
+        </geometry>
+        <material name="dark_grey">
+          <color rgba="0.2 0.2 0.2 1"/>
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 -0.5" rpy="0 0 0"/>
+        <geometry>
+          <cylinder radius="0.015" length="1.0"/>
+        </geometry>
+      </collision>
+    </link>
+  </xacro:macro>
+
+  <xacro:landing_leg prefix="leg_fr" xyz_offset="0.5 0.5 0" />
+  <xacro:landing_leg prefix="leg_fl" xyz_offset="0.5 -0.5 0" />
+  <xacro:landing_leg prefix="leg_bl" xyz_offset="-0.5 0.5 0" />
+  <xacro:landing_leg prefix="leg_br" xyz_offset="-0.5 -0.5 0" />
+
+</robot>

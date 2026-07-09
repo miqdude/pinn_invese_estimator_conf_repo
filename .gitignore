@@ -1,0 +1,9 @@
+.vscode
+flight_*
+training_*
+*.pyc
+__pycache__/*
+
+figure_*
+maju_mundur
+pe_trajectory
