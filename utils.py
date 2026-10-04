@@ -569,20 +569,73 @@ def animate_episode_flight(plt, episode_num, ep_actual_x, ep_actual_y, ep_actual
     # Display as an interactive HTML5 video right inside Jupyter
     # return HTML(anim.to_jshtml())
 
-def calculate_true_principal_inertia(base_J_diag, payload_mass, payload_offset):
-    """
-    Calculates the exact True Inertia of the multi-rotor system using the Parallel Axis Theorem.
-    Assumes the payload is a dense point mass located at the offset.
-    """
-    px, py, pz = payload_offset
+# def calculate_true_principal_inertia(base_J_diag, payload_mass, payload_offset):
+#     """
+#     Calculates the exact True Inertia of the multi-rotor system using the Parallel Axis Theorem.
+#     Assumes the payload is a dense point mass located at the offset.
+#     """
+#     px, py, pz = payload_offset
     
-    # Calculate the shift in inertia caused by the offset mass
-    delta_Jxx = payload_mass * (py**2 + pz**2)
-    delta_Jyy = payload_mass * (px**2 + pz**2)
-    delta_Jzz = payload_mass * (px**2 + py**2)
+#     # Calculate the shift in inertia caused by the offset mass
+#     delta_Jxx = payload_mass * (py**2 + pz**2)
+#     delta_Jyy = payload_mass * (px**2 + pz**2)
+#     delta_Jzz = payload_mass * (px**2 + py**2)
     
-    true_Jxx = base_J_diag[0] + delta_Jxx
-    true_Jyy = base_J_diag[1] + delta_Jyy
-    true_Jzz = base_J_diag[2] + delta_Jzz
+#     true_Jxx = base_J_diag[0] + delta_Jxx
+#     true_Jyy = base_J_diag[1] + delta_Jyy
+#     true_Jzz = base_J_diag[2] + delta_Jzz
 
-    return true_Jxx, true_Jyy, true_Jzz
+#     return true_Jxx, true_Jyy, true_Jzz
+
+# a fix from deepseek
+def calculate_true_principal_inertia(J_frame_diag, m_payload, r_payload_offset):
+    r = np.array(r_payload_offset)
+    I3 = np.eye(3)
+    delta_J = m_payload * (np.dot(r, r) * I3 - np.outer(r, r))
+    J_frame = np.diag(J_frame_diag)
+    return np.diag(J_frame + delta_J)
+
+def get_composite_inertia(p, robot_id):
+    """Compute composite inertia about the base link origin."""
+    base_mass = p.getDynamicsInfo(robot_id, -1)[0]
+    base_inertia = np.diag(p.getDynamicsInfo(robot_id, -1)[2])  # diag only
+    
+    # Base position in world
+    base_pos, base_orn = p.getBasePositionAndOrientation(robot_id)
+    
+    total_mass = base_mass
+    composite = base_inertia.copy()
+    
+    for i in range(p.getNumJoints(robot_id)):
+        info = p.getDynamicsInfo(robot_id, i)
+        link_mass = info[0]
+        link_inertia_diag = np.array(info[2])
+        link_com_local = np.array(info[3])
+        
+        # World position of this link
+        link_state = p.getLinkState(robot_id, i, computeForwardKinematics=True)
+        link_world_pos = np.array(link_state[4])  # world link frame pos
+        link_world_orn = link_state[5]
+        
+        # Rotate local CoG offset into world
+        rot = np.array(p.getMatrixFromQuaternion(link_world_orn)).reshape(3, 3)
+        link_com_world = link_world_pos + rot @ link_com_local
+        
+        # Vector from base to link CoG, in base frame
+        r_world = link_com_world - np.array(base_pos)
+        # Rotate into base frame
+        base_rot = np.array(p.getMatrixFromQuaternion(base_orn)).reshape(3, 3)
+        r = base_rot.T @ r_world
+        
+        # Parallel axis term
+        parallel_axis = link_mass * (np.dot(r, r) * np.eye(3) - np.outer(r, r))
+        
+        # Add intrinsic inertia (rotate link inertia to base frame)
+        link_rot_world = rot
+        link_inertia_world = link_rot_world @ np.diag(link_inertia_diag) @ link_rot_world.T
+        link_inertia_base = base_rot.T @ link_inertia_world @ base_rot
+        
+        composite += link_inertia_base + parallel_axis
+        total_mass += link_mass
+    
+    return composite, total_mass

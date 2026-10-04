@@ -68,13 +68,13 @@ class PayloadEnv(object):
 
         # 3. Generate a Random CoG Shift (between -15cm and +15cm)
         # We only shift X and Y. Z stays slightly elevated to sit on the frame.
-        x_shift = np.random.uniform(-0.15, 0.15)
-        y_shift = np.random.uniform(-0.15, 0.15)
-        # x_shift = -0.141
-        # y_shift = -0.104
+        # x_shift = np.random.uniform(-0.15, 0.15)
+        # y_shift = np.random.uniform(-0.15, 0.15)
+        x_shift = 0.1
+        y_shift = 0.1
         self.payload_offset = [x_shift, y_shift, 0.05]
 
-        random_payload_mass = self.rng.uniform(0.5,1)
+        random_payload_mass = 1 # Kg
 
         # 4. Re-spawn the red box
         cog_shift_mass = random_payload_mass # 1 kg

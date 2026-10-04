@@ -7,3 +7,7 @@ __pycache__/*
 figure_*
 maju_mundur
 pe_trajectory
+
+*.mp4
+*.csv
+*.png
