@@ -90,7 +90,7 @@ def get_trajectory(t, path_type="figure8"):
         flight_t = t - hover_time
         
         if path_type == "circle":
-            radius = 10.0
+            radius = 5.0
             omega = 0.15 
         
             pos = [radius * np.sin(omega * flight_t), 

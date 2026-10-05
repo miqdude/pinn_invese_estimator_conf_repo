@@ -4,12 +4,23 @@ import numpy as np
 from quadrotor import Quadrotor
 
 class PayloadEnv(object):
-    def __init__(self, urdf_path, virtual_leader_urf_path, leader, p, gravity_mss = 9.81, debug = False, drone_max_thrust = 25):
+    def __init__(
+            self,
+            urdf_path,
+            virtual_leader_urf_path,
+            leader,
+            p,
+            gravity_mss = 9.81,
+            debug = False,
+            drone_max_thrust = 25,
+            true_offset= [0.15, 0.15],
+        ):
         self.debug = debug
         self.pybullet = p
         self.gravity_mss = gravity_mss
         self.drone_max_thrust = drone_max_thrust
         self.starting_position = [0, 0, 0.2]
+        self.true_offset = true_offset
 
         # Load the assembled model safely using absolute paths
         current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -70,11 +81,11 @@ class PayloadEnv(object):
         # We only shift X and Y. Z stays slightly elevated to sit on the frame.
         # x_shift = np.random.uniform(-0.15, 0.15)
         # y_shift = np.random.uniform(-0.15, 0.15)
-        x_shift = 0.1
-        y_shift = 0.1
+        x_shift = self.true_offset[0]
+        y_shift = self.true_offset[1]
         self.payload_offset = [x_shift, y_shift, 0.05]
 
-        random_payload_mass = 1 # Kg
+        random_payload_mass = 1.0 # Kg
 
         # 4. Re-spawn the red box
         cog_shift_mass = random_payload_mass # 1 kg
